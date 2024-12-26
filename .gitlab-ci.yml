@@ -1,0 +1,30 @@
+stages:
+  - test
+  - report
+
+test:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-23
+  script:
+    - mvn -batch-mode --errors --fail-at-end test -Dallure.results.directory=target/allure-results
+    - mvn -batch-mode --errors --fail-at-end allure:report
+  artifacts:
+    when: always
+    paths:
+      - target/allure-results
+    expire_in: 1 week
+
+allure_report:
+  stage: report
+  image: maven:3.9.9-eclipse-temurin-23
+  script:
+    - apt-get update && apt-get install -y wget
+    - wget -qO- https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz | tar -xz
+    - ./allure-2.29.0/bin/allure generate target/allure-results -o target/allure-report || true
+  artifacts:
+    when: always
+    paths:
+      - target/allure-report
+    expire_in: 1 week
+  dependencies:
+    - test
